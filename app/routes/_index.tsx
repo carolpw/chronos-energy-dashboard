@@ -1,3 +1,4 @@
+import React from "react"
 import type { MetaFunction } from "@remix-run/cloudflare";
 import {
   Activity,
@@ -65,10 +66,12 @@ function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-slate-800">
-      <SidebarHeader className="border-b border-slate-800 p-4">
+      <SidebarHeader className="border-b border-slate-800">
         <div className="flex items-center gap-2">
-          <Building2 className="h-6 w-6 text-teal-400" />
-          <span className="font-semibold text-slate-100 group-data-[collapsible=icon]:hidden">EnergyOS</span>
+          <Building2 className="h-6 w-6 text-teal-400 flex-shrink-0" />
+          <span className="font-semibold text-slate-100 truncate group-data-[collapsed=true]:hidden">
+            EnergyOS
+          </span>
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -79,15 +82,9 @@ function AppSidebar() {
                 const IconComponent = iconMap[item.icon]
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={item.isActive}
-                      className="text-slate-300 hover:text-slate-100 hover:bg-slate-800 data-[active=true]:bg-teal-900/50 data-[active=true]:text-teal-100"
-                    >
-                      <a href="#" className="flex items-center gap-2">
-                        <IconComponent className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </a>
+                    <SidebarMenuButton isActive={item.isActive}>
+                      <IconComponent className="h-4 w-4" />
+                      <span>{item.title}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )
@@ -96,8 +93,10 @@ function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-slate-800 p-4">
-        <div className="text-xs text-slate-400 group-data-[collapsible=icon]:hidden">v2.1.4 • EU Compliant</div>
+      <SidebarFooter>
+        <div className="text-xs text-slate-400 group-data-[collapsed=true]:hidden">
+          v2.1.4 • EU Compliant
+        </div>
       </SidebarFooter>
     </Sidebar>
   )

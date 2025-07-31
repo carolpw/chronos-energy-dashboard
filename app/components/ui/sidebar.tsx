@@ -44,7 +44,7 @@ export function Sidebar({
   return (
     <div
       className={cn(
-        "relative flex flex-col bg-sidebar text-sidebar-foreground transition-all duration-300",
+        "relative flex flex-col bg-slate-900 text-slate-100 transition-all duration-300 border-r border-slate-800",
         open ? "w-64" : "w-16",
         className
       )}
@@ -56,25 +56,35 @@ export function Sidebar({
 }
 
 export function SidebarHeader({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  const context = React.useContext(SidebarContext)
+  const { open } = context || { open: true }
+
   return (
     <div className={cn("p-4", className)} {...props}>
-      {children}
+      <div className={cn("transition-all duration-300", !open && "opacity-0 scale-95")}>
+        {children}
+      </div>
     </div>
   )
 }
 
 export function SidebarContent({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("flex-1", className)} {...props}>
+    <div className={cn("flex-1 overflow-hidden", className)} {...props}>
       {children}
     </div>
   )
 }
 
 export function SidebarFooter({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  const context = React.useContext(SidebarContext)
+  const { open } = context || { open: true }
+
   return (
-    <div className={cn("p-4 border-t border-sidebar-border", className)} {...props}>
-      {children}
+    <div className={cn("p-4 border-t border-slate-700", className)} {...props}>
+      <div className={cn("transition-all duration-300", !open && "opacity-0 scale-95")}>
+        {children}
+      </div>
     </div>
   )
 }
@@ -128,27 +138,31 @@ export function SidebarMenuButton({
   
   const { open } = context
 
+  const baseClasses = cn(
+    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 hover:bg-slate-800 w-full text-left",
+    isActive && "bg-teal-900/50 text-teal-100 hover:bg-teal-900/60",
+    !isActive && "text-slate-300 hover:text-slate-100",
+    !open && "justify-center px-2",
+    className
+  )
+
   if (asChild) {
     return React.cloneElement(children as React.ReactElement, {
-      className: cn(
-        "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full",
-        isActive && "bg-sidebar-accent text-sidebar-accent-foreground",
-        className
-      ),
+      className: baseClasses,
       ...props
     })
   }
 
   return (
-    <button
-      className={cn(
-        "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full text-left",
-        isActive && "bg-sidebar-accent text-sidebar-accent-foreground",
-        className
+    <button className={baseClasses} {...props}>
+      <span className="flex-shrink-0">
+        {React.Children.toArray(children)[0]}
+      </span>
+      {open && (
+        <span className="truncate transition-all duration-300">
+          {React.Children.toArray(children).slice(1)}
+        </span>
       )}
-      {...props}
-    >
-      {children}
     </button>
   )
 }
@@ -162,7 +176,7 @@ export function SidebarTrigger({ className, ...props }: React.HTMLAttributes<HTM
   return (
     <button
       onClick={() => setOpen(!open)}
-      className={cn("p-1", className)}
+      className={cn("p-2 hover:bg-slate-800 rounded-md transition-colors", className)}
       {...props}
     >
       <svg
