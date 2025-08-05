@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pandas
+torch
+numpy
+transformers  # required by chronos
+chronos  # if not installable via pip, use git install from amazon repo
