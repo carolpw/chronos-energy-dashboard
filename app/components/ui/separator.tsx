@@ -2,11 +2,10 @@ import * as React from "react"
 import * as SeparatorPrimitive from "@radix-ui/react-separator"
 import { cn } from "~/lib/utils"
 
-// ✅ Type aliases to avoid TSX parse error
-type SeparatorRef = React.ElementRef<typeof SeparatorPrimitive.Root>
-type SeparatorProps = React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>
-
-const Separator = React.forwardRef<SeparatorRef, SeparatorProps>(
+const Separator = React.forwardRef<
+  React.ElementRef<typeof SeparatorPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>
+>(
   (
     { className, orientation = "horizontal", decorative = true, ...props },
     ref
@@ -24,7 +23,6 @@ const Separator = React.forwardRef<SeparatorRef, SeparatorProps>(
     />
   )
 )
-
 Separator.displayName = SeparatorPrimitive.Root.displayName
 
 export { Separator }

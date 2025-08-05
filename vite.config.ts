@@ -4,7 +4,6 @@ import {
   cloudflareDevProxyVitePlugin,
 } from "@remix-run/dev";
 import tsconfigPaths from "vite-tsconfig-paths";
-import react from "@vitejs/plugin-react"; // ✅ Added this
 import { getLoadContext } from "./load-context";
 
 declare module "@remix-run/cloudflare" {
@@ -18,7 +17,6 @@ export default defineConfig({
     cloudflareDevProxyVitePlugin({
       getLoadContext,
     }),
-    react(), // ✅ Add this
     remix({
       future: {
         v3_fetcherPersist: true,

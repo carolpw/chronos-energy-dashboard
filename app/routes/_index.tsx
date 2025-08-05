@@ -46,7 +46,22 @@ import {
   SidebarFooter,
 } from "~/components/ui/sidebar"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "~/components/ui/chart"
-import { navItems, temperatureData, energyCostData, weeklyUsageData } from "~/lib/mock-data"
+import { navItems, energyCostData, weeklyUsageData } from "~/lib/mock-data"
+
+import { useEffect, useState } from "react";
+
+// Define the shape of the chart data point
+type ChartPoint = {
+  time: string;
+  actual?: number;
+  predicted?: number;
+  forecast?: number;
+};
+
+// export function Index() {
+//   return null;
+// }
+
 
 export const meta: MetaFunction = () => {
   return [
@@ -103,6 +118,42 @@ function AppSidebar() {
 }
 
 export default function EnergyDashboard() {
+  const [temperatureData, setTemperatureData] = useState<ChartPoint[]>([]);
+  //
+  // temperatureData -> components, to show in the page
+  // setTemperatureData -> logic, to update the data
+
+  useEffect(() => {
+    async function fetchForecast() {
+      const res = await fetch("http://localhost:8000/forecast");
+      const data: any = await res.json();
+
+      const pastPoints: ChartPoint[] = data.timestamps.map((ts: string, i: number) => ({
+        time: new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        actual: data.actual[i],
+        predicted: data.forecast[1]?.[i] ?? null, // Q50 predictions for past
+      }));
+
+      // Generate timestamps for forecast: next 12 hours at 1-minute intervals
+      const forecastTimestamps: string[] = [];
+      const start = new Date(data.timestamps[data.timestamps.length - 1]);
+      for (let i = 0; i < data.forecast[1].length; i++) {
+        const t = new Date(start.getTime() + (i + 1) * 60000); // +1 minute per step
+        forecastTimestamps.push(t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+      }
+
+      const futurePoints: ChartPoint[] = forecastTimestamps.map((t, i) => ({
+        time: t,
+        forecast: data.forecast[1]?.[i] ?? null, // Q50 future forecast
+      }));
+
+      setTemperatureData([...pastPoints, ...futurePoints]);
+    }
+
+    fetchForecast();
+  }, []);
+
+
   return (
     <div className="min-h-screen bg-slate-950">
       <SidebarProvider defaultOpen={false}>
@@ -244,9 +295,9 @@ export default function EnergyDashboard() {
                             style: { textAnchor: "middle", fill: "#64748b" },
                           }}
                         />
-                        <ChartTooltip
+                        {/* <ChartTooltip
                           content={<ChartTooltipContent />}
-                        />
+                        /> */}
                         <ReferenceLine x="14:00" stroke="#64748b" strokeDasharray="5 5" />
 
                         {/* Actual temperature line */}
@@ -330,7 +381,7 @@ export default function EnergyDashboard() {
                               style: { textAnchor: "middle", fill: "#64748b" },
                             }}
                           />
-                          <ChartTooltip content={<ChartTooltipContent />} />
+                          {/* <ChartTooltip content={<ChartTooltipContent />} /> */}
                           <Bar dataKey="rate" fill="#3b82f6" radius={[2, 2, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
@@ -338,47 +389,49 @@ export default function EnergyDashboard() {
                   </CardContent>
                 </Card>
 
+                
+
                 <Card className="border-slate-800 bg-slate-900/50">
-                  <CardHeader>
-                    <CardTitle className="text-slate-100">Weekly Usage Pattern</CardTitle>
-                    <CardDescription className="text-slate-400">Hot water consumption (kWh)</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ChartContainer
-                      config={{
-                        usage: {
-                          label: "Usage",
-                          color: "hsl(var(--chart-3))",
-                        },
-                      }}
-                      className="h-[200px]"
-                    >
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={weeklyUsageData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                          <XAxis dataKey="day" stroke="#64748b" fontSize={12} />
-                          <YAxis
-                            stroke="#64748b"
-                            fontSize={12}
-                            label={{
-                              value: "kWh",
-                              angle: -90,
-                              position: "insideLeft",
-                              style: { textAnchor: "middle", fill: "#64748b" },
-                            }}
-                          />
-                          <ChartTooltip content={<ChartTooltipContent />} />
-                          <Line
-                            type="monotone"
-                            dataKey="usage"
-                            stroke="#14b8a6"
-                            strokeWidth={3}
-                            dot={{ fill: "#14b8a6", strokeWidth: 2, r: 4 }}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
-                  </CardContent>
+                <CardHeader>
+                  <CardTitle className="text-slate-100">Weekly Usage Pattern</CardTitle>
+                  <CardDescription className="text-slate-400">Hot water consumption (kWh)</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer
+                    config={{
+                      usage: {
+                        label: "Usage",
+                        color: "hsl(var(--chart-3))",
+                      },
+                    }}
+                    className="h-[200px]"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={weeklyUsageData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                        <XAxis dataKey="day" stroke="#64748b" fontSize={12} />
+                        <YAxis
+                          stroke="#64748b"
+                          fontSize={12}
+                          label={{
+                            value: "kWh",
+                            angle: -90,
+                            position: "insideLeft",
+                            style: { textAnchor: "middle", fill: "#64748b" },
+                          }}
+                        />
+                        {/* <ChartTooltip content={<ChartTooltipContent />} /> */}
+                        <Line
+                          type="monotone"
+                          dataKey="usage"
+                          stroke="#14b8a6"
+                          strokeWidth={3}
+                          dot={{ fill: "#14b8a6", strokeWidth: 2, r: 4 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
                 </Card>
               </div>
             </main>
