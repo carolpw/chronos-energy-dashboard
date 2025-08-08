@@ -50,17 +50,27 @@ import { navItems, energyCostData, weeklyUsageData } from "~/lib/mock-data"
 
 import { useEffect, useState } from "react";
 
+
+// For times shown in X
+import dayjs from "dayjs"; // If not already using, install with: npm install dayjs
+
+const now = dayjs();
+const xTicks = Array.from({ length: 24 }, (_, i) =>
+  now.subtract(12, "hour").add(i, "hour").format("HH:mm")
+);
+
+// For Reference line
+const currentHour = new Date();
+const currentTimeStr = currentHour.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+
 // Define the shape of the chart data point
 type ChartPoint = {
   time: string;
   actual?: number;
-  predicted?: number;
   forecast?: number;
 };
 
-// export function Index() {
-//   return null;
-// }
 
 
 export const meta: MetaFunction = () => {
@@ -119,9 +129,7 @@ function AppSidebar() {
 
 export default function EnergyDashboard() {
   const [temperatureData, setTemperatureData] = useState<ChartPoint[]>([]);
-  //
-  // temperatureData -> components, to show in the page
-  // setTemperatureData -> logic, to update the data
+  const [latestActualTemperature, setLatestActualTemperature] = useState<number | undefined>();
 
   useEffect(() => {
     async function fetchForecast() {
@@ -131,25 +139,29 @@ export default function EnergyDashboard() {
       const pastPoints: ChartPoint[] = data.timestamps.map((ts: string, i: number) => ({
         time: new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         actual: data.actual[i],
-        predicted: data.forecast[1]?.[i] ?? null, // Q50 predictions for past
       }));
 
-      // Generate timestamps for forecast: next 12 hours at 1-minute intervals
       const forecastTimestamps: string[] = [];
       const start = new Date(data.timestamps[data.timestamps.length - 1]);
+      console.log("Forecast length (in points):", data.forecast[1]?.length);
       for (let i = 0; i < data.forecast[1].length; i++) {
-        const t = new Date(start.getTime() + (i + 1) * 60000); // +1 minute per step
+        const t = new Date(start.getTime() + (i + 1) * 15 * 60000); // 15-minute intervals
         forecastTimestamps.push(t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
       }
 
       const futurePoints: ChartPoint[] = forecastTimestamps.map((t, i) => ({
         time: t,
-        forecast: data.forecast[1]?.[i] ?? null, // Q50 future forecast
+        forecast: data.forecast[1]?.[i] ?? null,
       }));
 
-      setTemperatureData([...pastPoints, ...futurePoints]);
-    }
 
+      const latestActual = [...pastPoints]
+      .reverse()
+      .find(point => point.actual !== undefined && point.actual !== null)?.actual;
+
+    setTemperatureData([...pastPoints, ...futurePoints]);
+    setLatestActualTemperature(latestActual);
+  }
     fetchForecast();
   }, []);
 
@@ -180,6 +192,7 @@ export default function EnergyDashboard() {
               </div>
             </div>
           </header>
+          
 
           <div className="flex">
             {/* Main Content */}
@@ -193,7 +206,9 @@ export default function EnergyDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center gap-2">
-                      <div className="text-2xl font-bold text-slate-100">68°C</div>
+                    <div className="text-2xl font-bold text-slate-100">
+                      {latestActualTemperature !== undefined ? `${latestActualTemperature.toFixed(0)}°C` : '–'}
+                    </div>
                       <Badge variant="secondary" className="bg-green-900/50 text-green-300">
                         Optimal
                       </Badge>
@@ -247,9 +262,9 @@ export default function EnergyDashboard() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-slate-100">Water Temperature Forecast - Model Validation</CardTitle>
+                      <CardTitle className="text-slate-100">Water Temperature Forecast</CardTitle>
                       <CardDescription className="text-slate-400">
-                        Past 12 hours (actual vs predicted) + Next 12 hours (forecast)
+                        Past 12 hours (actual) + Next 6 hours (forecast)
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
@@ -269,10 +284,6 @@ export default function EnergyDashboard() {
                         label: "Actual Temperature",
                         color: "hsl(var(--chart-1))",
                       },
-                      predicted: {
-                        label: "Previous Predictions",
-                        color: "hsl(var(--chart-2))",
-                      },
                       forecast: {
                         label: "Current Forecast",
                         color: "hsl(var(--chart-2))",
@@ -283,7 +294,14 @@ export default function EnergyDashboard() {
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={temperatureData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                        <XAxis dataKey="time" stroke="#64748b" fontSize={12} />
+                        <XAxis
+                          dataKey="time"
+                          stroke="#64748b"
+                          fontSize={12}
+                          ticks={xTicks}
+                          tickFormatter={(tick) => tick}
+                        />
+
                         <YAxis
                           domain={[45, 75]}
                           stroke="#64748b"
@@ -298,7 +316,11 @@ export default function EnergyDashboard() {
                         {/* <ChartTooltip
                           content={<ChartTooltipContent />}
                         /> */}
-                        <ReferenceLine x="14:00" stroke="#64748b" strokeDasharray="5 5" />
+                        <ReferenceLine x={currentTimeStr} stroke="#64748b" strokeDasharray="5 5" />
+                        
+
+                        {/* Confidence interval area */}
+                        <Area dataKey="confidence" stroke="none" fill="#64748b" fillOpacity={0.2} />
 
                         {/* Actual temperature line */}
                         <Line
@@ -309,17 +331,7 @@ export default function EnergyDashboard() {
                           dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
                           connectNulls={false}
                         />
-
-                        {/* Previous predictions line */}
-                        <Line
-                          type="monotone"
-                          dataKey="predicted"
-                          stroke="#f97316"
-                          strokeWidth={2}
-                          dot={{ fill: "#f97316", strokeWidth: 2, r: 3 }}
-                          connectNulls={false}
-                        />
-
+                        
                         {/* Forecast line */}
                         <Line
                           type="monotone"
@@ -337,10 +349,6 @@ export default function EnergyDashboard() {
                     <div className="flex items-center gap-2">
                       <div className="h-3 w-3 rounded-full bg-blue-500"></div>
                       <span className="text-slate-300">Actual Temperature</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full bg-orange-500"></div>
-                      <span className="text-slate-300">Previous Predictions</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="h-3 w-3 rounded-full border-2 border-orange-500 border-dashed bg-transparent"></div>
@@ -456,7 +464,7 @@ export default function EnergyDashboard() {
                       <span className="text-sm text-slate-300">Temperature Sensors</span>
                       <div className="flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-400" />
-                        <span className="text-sm text-green-400">Active (12/12)</span>
+                        <span className="text-sm text-green-400">Active</span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
@@ -571,4 +579,5 @@ export default function EnergyDashboard() {
       </SidebarProvider>
     </div>
   )
+  
 }

@@ -5,8 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 
 # Assume these modules exist elsewhere in your project
-from app.models.chronos_forecaster import ChronosForecaster
-from app.services.data_generator import generate_mock_data
+from models.chronos_forecaster import ChronosForecaster
+from services.data_generator import generate_mock_data
 
 
 # Defines request/response data shapes using Pydantic
@@ -27,7 +27,7 @@ app = FastAPI(title="EuroTech Energy Management API")
 # Enable CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5174"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
