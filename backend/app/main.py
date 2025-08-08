@@ -39,12 +39,16 @@ forecaster = ChronosForecaster()
 
 @app.get("/forecast", response_model=ForecastResponse)
 def get_forecast():
-    df = generate_mock_data(intervals=4*12)
-    forecast_result = forecaster.predict(df["target"], prediction_length=24)  # 12 hours
+    full_df = generate_mock_data(intervals=96 * 7)  # 7 days history
+    context_window = 48  # last 12 hours (15 min * 48 = 720 min = 12h)
+    prediction_window = 24  # next 6 hours (15 min * 24 = 360 min = 6h)
 
-    timestamps = list(df["timestamp"])
+    recent_df = full_df.iloc[-context_window:]  # last 12 hours only
+    forecast_result = forecaster.predict(full_df["target"], prediction_length=prediction_window)
+
+    timestamps = list(recent_df["timestamp"])
     return ForecastResponse(
         timestamps=timestamps,
-        actual=df["target"].tolist(),
-        forecast=forecast_result.tolist(),
+        actual=recent_df["target"].tolist(),
+        forecast=forecast_result.tolist(),  # length 24
     )
