@@ -1,10 +1,8 @@
-# main.py - Unified FastAPI app with routing and forecast logic
 
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 
-# Assume these modules exist elsewhere in your project
 from models.chronos_forecaster import ChronosForecaster
 from services.data_generator import generate_mock_data
 
