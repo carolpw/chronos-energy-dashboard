@@ -2,6 +2,8 @@
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
+from mangum import Mangum
+import os
 
 from models.chronos_forecaster import ChronosForecaster
 from services.data_generator import generate_mock_data
@@ -21,6 +23,9 @@ class ForecastResponse(BaseModel):
 
 # Initialize app
 app = FastAPI(title="EuroTech Energy Management API")
+
+# Read allowed origins from env var so CDK can set them
+allowed_origins = os.environ.get("ALLOW_ORIGINS", "http://localhost:5174").split(",")
 
 # Enable CORS for frontend access
 app.add_middleware(
@@ -50,3 +55,6 @@ def get_forecast():
         actual=recent_df["target"].tolist(),
         forecast=forecast_result.tolist(),  # length 24
     )
+
+# Lambda handler (Mangum adapts FastAPI -> Lambda)
+handler = Mangum(app)
