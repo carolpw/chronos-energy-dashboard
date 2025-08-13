@@ -133,7 +133,7 @@ export default function EnergyDashboard() {
 
   useEffect(() => {
     async function fetchForecast() {
-      const res = await fetch("http://localhost:8000/forecast");
+      const res = await fetch("https://5piprfmuyl.execute-api.eu-north-1.amazonaws.com/prod/forecast");
       const data: any = await res.json();
 
       const pastPoints: ChartPoint[] = data.timestamps.map((ts: string, i: number) => ({

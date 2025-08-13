@@ -24,13 +24,10 @@ class ForecastResponse(BaseModel):
 # Initialize app
 app = FastAPI(title="EuroTech Energy Management API")
 
-# Read allowed origins from env var so CDK can set them
-allowed_origins = os.environ.get("ALLOW_ORIGINS", "http://localhost:5174").split(",")
-
 # Enable CORS for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5174"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
