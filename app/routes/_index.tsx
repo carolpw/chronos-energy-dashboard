@@ -135,35 +135,32 @@ export default function EnergyDashboard() {
     async function fetchForecast() {
       const res = await fetch("https://5piprfmuyl.execute-api.eu-north-1.amazonaws.com/prod/forecast");
       const data: any = await res.json();
-
+  
+      // Past points
       const pastPoints: ChartPoint[] = data.timestamps.map((ts: string, i: number) => ({
-        time: new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        time: new Date(ts),  // Keep as Date object
         actual: data.actual[i],
       }));
-
-      const forecastTimestamps: string[] = [];
+  
+      // Forecast points
       const start = new Date(data.timestamps[data.timestamps.length - 1]);
-      console.log("Forecast length (in points):", data.forecast[1]?.length);
-      for (let i = 0; i < data.forecast[1].length; i++) {
-        const t = new Date(start.getTime() + (i + 1) * 15 * 60000); // 15-minute intervals
-        forecastTimestamps.push(t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
-      }
-
-      const futurePoints: ChartPoint[] = forecastTimestamps.map((t, i) => ({
-        time: t,
-        forecast: data.forecast[1]?.[i] ?? null,
+      const futurePoints: ChartPoint[] = data.forecast[0].map((f: number, i: number) => ({
+        time: new Date(start.getTime() + (i + 1) * 15 * 60000), // 15-min intervals
+        forecast: f,
       }));
-
-
+  
+      // Latest actual temperature
       const latestActual = [...pastPoints]
-      .reverse()
-      .find(point => point.actual !== undefined && point.actual !== null)?.actual;
-
-    setTemperatureData([...pastPoints, ...futurePoints]);
-    setLatestActualTemperature(latestActual);
-  }
+        .reverse()
+        .find(point => point.actual !== undefined && point.actual !== null)?.actual;
+  
+      setTemperatureData([...pastPoints, ...futurePoints]);
+      setLatestActualTemperature(latestActual);
+    }
+  
     fetchForecast();
   }, []);
+  
 
 
   return (
@@ -298,8 +295,9 @@ export default function EnergyDashboard() {
                           dataKey="time"
                           stroke="#64748b"
                           fontSize={12}
-                          ticks={xTicks}
-                          tickFormatter={(tick) => tick}
+                          tickFormatter={(tick: Date) =>
+                            tick.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                          }
                         />
 
                         <YAxis
@@ -316,7 +314,13 @@ export default function EnergyDashboard() {
                         {/* <ChartTooltip
                           content={<ChartTooltipContent />}
                         /> */}
-                        <ReferenceLine x={currentTimeStr} stroke="#64748b" strokeDasharray="5 5" />
+                        
+                        <ReferenceLine
+                          x={new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          stroke="#64748b"
+                          strokeDasharray="5 5"
+                        />
+
                         
 
                         {/* Confidence interval area */}

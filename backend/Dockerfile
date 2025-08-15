@@ -1,31 +1,15 @@
-# ============================
-# Stage 1: Install dependencies
-# ============================
-FROM public.ecr.aws/lambda/python:3.10 AS builder
+# Dockerfile
+FROM public.ecr.aws/lambda/python:3.11
 
-WORKDIR /app
+# Install system dependencies
+RUN yum install -y git
 
-# Copy only requirements first to leverage Docker layer caching
+# Copy and install Python dependencies
 COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
 
-# Install dependencies into /install (no pip cache)
-RUN pip install --upgrade pip \
- && pip install --no-cache-dir --target=/install -r requirements.txt
+# Copy application code
+COPY . ${LAMBDA_TASK_ROOT}
 
-# ============================
-# Stage 2: Final AWS Lambda image
-# ============================
-FROM public.ecr.aws/lambda/python:3.10
-
-WORKDIR /var/task
-
-# Copy dependencies from builder stage
-COPY --from=builder /install /var/task
-
-# Copy only required application files (avoid extra context size)
-COPY main.py ./
-COPY models/ ./models/
-COPY services/ ./services/
-
-# Lambda entrypoint
+# Set the handler for AWS Lambda
 CMD ["main.handler"]

@@ -13,12 +13,12 @@ export class InfraStack extends cdk.Stack {
 
     // 2. Define Lambda function using Docker image from ECR repo
     const lambdaFunction = new lambda.DockerImageFunction(this, 'FastAPILambdaFunction', {
-      code: lambda.DockerImageCode.fromEcr(repo, {
-        tag: 'latest', // specify your tag here; push the image later with this tag
-      }),
-      memorySize: 1024, // adjust memory if needed
-      timeout: cdk.Duration.seconds(300), // adjust timeout if needed
+      code: lambda.DockerImageCode.fromEcr(repo, { tagOrDigest: '20250815v3' }),
+      memorySize: 3008, // was 1024 — increase to avoid OOM and speed downloads
+      timeout: cdk.Duration.seconds(900), // you already had 900s; keep it
+      ephemeralStorageSize: cdk.Size.gibibytes(4), // NEW: raise /tmp from ~512 MB to 4 GB
     });
+    
 
     // 3. Create API Gateway with Lambda integration
     const api = new apigw.LambdaRestApi(this, 'FastAPILambdaApi', {

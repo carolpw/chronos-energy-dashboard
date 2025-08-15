@@ -1,18 +1,8 @@
-# Core ML - CPU wheel only
-torch==2.1.1
-
-# NumPy & Data Processing
-numpy==1.26.4
-pandas==2.2.2
-
-# Chronos forecasting library (Amazon)
-chronos-forecasting==1.5.3
-
-# API framework
-fastapi==0.110.0
+fastapi==0.115.0
 mangum==0.17.0
-
-# Utilities
-python-dateutil==2.9.0.post0
-pydantic==2.7.1
-requests==2.31.0
+pandas==2.2.2
+numpy==1.25.2         # <2.0 for PyTorch compatibility
+torch==2.6.0+cpu
+transformers==4.49.0
+chronos-forecasting==1.5.2
+uvicorn==0.30.6
